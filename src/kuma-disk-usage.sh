@@ -16,6 +16,7 @@ function postDiskUsageGeneric #(disk, threshold, push_url, type)
     push_url="$3"
     type="$4"
     health=""
+    service_status="up"
 
     case ${type} in
         disk)
@@ -24,9 +25,12 @@ function postDiskUsageGeneric #(disk, threshold, push_url, type)
         ZFS)
             percentage=$(zpool list "${disk}" | tail -1 | awk '{printf "%s", $8}')
             health=$(zpool list "${disk}" | tail -1 | awk '{printf "%s", $10}')
+            if [[ "${health}" != "ONLINE" ]]; then
+                service_status="down"
+            fi
             ;;
         *)
-            echo "Error: type not recognized."
+            echo "Type not recognized."
             exit 127
             ;;
     esac
@@ -36,18 +40,14 @@ function postDiskUsageGeneric #(disk, threshold, push_url, type)
         echo "Error querying disk usage"
         exit 127
     fi
+    if [[ ${number} -ge ${threshold} ]]; then
+        service_status="down"
+    fi
 
-    # The following text may be changed as desired
+    # The following text may be changed if desired
     message="Disk usage on ${disk} is ${number}%"
     if [[ -n "${health}" ]]; then
         message+=", status ${health}"
-    fi
-
-    service_status="down"
-    if [[ ${number} -lt ${threshold} ]]; then
-        if [[ -z "${health}" ]] || [[ "${health}" = "ONLINE" ]]; then
-            service_status="up"
-        fi
     fi
 
     echo "Posting status '${service_status}' with message '${message}'"
