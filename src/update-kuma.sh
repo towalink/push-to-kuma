@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-# The following command makes several operations available for your use
-source push-to-kuma
+# The following commands make several operations available for your use.
+# The "push-to-kuma" script is expected to be in the same directory as the currently executed script.
+script_dir="$(dirname "${BASH_SOURCE[0]}")"
+source "${script_dir}/push-to-kuma"
 
 ### Add your query commands here ###
 
